@@ -18,15 +18,19 @@ def main(start_date, end_date):
     with open('data/hs300_stocks.csv', 'r') as fd:
         df = pd.read_csv(fd, parse_dates=['updateDate'])
     
-
     with bsw.BaoStockWrapper() as w:
         for _, row in df.iterrows():
             data = w.get_stock_data(code=row['code'], start_date=start_date, end_date=end_date)
             if data is None:
                 break
             data = detect_golden_cross(data)
-            if data['Crossover'].any():
+            if not data['Crossover'].any():
+                continue
+            last_cross = data['Crossover'].idxmax()
+            if last_cross >= len(data)-3:
                 print(f"检测到 SMA5 上穿 SMA20 的信号！ 股票代码：{row['code']} {row['code_name']}")
+                print(f"\t交叉时间发生在最近三天内{data.iloc[last_cross]}")
+
 
 if __name__ == "__main__":
     main(start_date='2025-01-01', end_date='2025-03-06')
