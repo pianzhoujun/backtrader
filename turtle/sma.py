@@ -1,18 +1,4 @@
-# 选定一些股票，然后遍历从baostock拉取数据，分别计算5日和20日sma, 推测是否有上穿现象。 
-# 这是第1步骤， 下一步是根据历史sma5 sma20算个回归模型，推测未来是否有上穿现象，需要重点关注的。
-
 import backtrader as bt
-import baostock as bs
-from datetime import datetime
-import pandas as pd
-
-import baostock_wrapper as bsw
-
-code_list = [
-    ("sh.601398", "工商银行"),
-    ("sh.601988", "中国银行"),
-    ("sh.601318", "中国平安"),
-]
 
 class SmaCross(bt.SignalStrategy):
     params = dict(sma1=5, sma2=20)
@@ -33,11 +19,18 @@ class SmaCross(bt.SignalStrategy):
             else:
                 print(f'lost loss {trade.pnlcomm}')
 
+    def stop(self):
+        self.print_final_cash()
+
+    def print_final_cash(self):
+        print(f'Final cash: {self.broker.getvalue()}')
+
     def __init__(self):
         sma1 = bt.ind.SMA(period=self.params.sma1)
         sma2 = bt.ind.SMA(period=self.params.sma2)
         crossover = bt.ind.CrossOver(sma1, sma2)
-        self.signal_add(bt.SIGNAL_LONG, crossover)
+        self.signal_add(bt.SIGNAL_LONG, crossover > 0)
+        self.signal_add(bt.SIGNAL_SHORT, crossover < 0)
 
 def runstrat(data):
     cerebro = bt.Cerebro()
@@ -52,19 +45,5 @@ def runstrat(data):
     )
     cerebro.adddata(data0)
     cerebro.addstrategy(SmaCross)
-    cerebro.addsizer(bt.sizers.FixedSize, stake=1)
+    cerebro.addsizer(bt.sizers.FixedSize, stake=100)
     cerebro.run()
-    # cerebro.plot()
-
-def main():
-    today = datetime.today().strftime("%Y-%m-%d")
-    start_date = "2025-01-01"
-
-    with bsw.BaoStockWrapper() as bs:
-        for code, name in code_list:
-            print("开始处理：{}".format(name))
-            df = bs.get_stock_data(code, start_date, today)
-            runstrat(df)
-
-if __name__ == '__main__':
-    main()
