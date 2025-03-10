@@ -13,8 +13,9 @@ def detect_golden_cross(df):
     df['Crossover'] = (df['SMA5'] > df['SMA20']) & (df['SMA5'].shift(1) <= df['SMA20'].shift(1))
     return df
 
-def run(start_date, end_date):
-    with open('data/hs300_stocks.csv', 'r') as fd:
+def run(start_date, end_date, stock_file, detect_days=7):
+    # with open('data/hs300_stocks.csv', 'r') as fd:
+    with open(stock_file, 'r') as fd:
         df = pd.read_csv(fd, parse_dates=['updateDate'])
     
     gloden_cross = {
@@ -37,7 +38,7 @@ def run(start_date, end_date):
             if not data['Crossover'].any():
                 continue
             last_cross = data['Crossover'].idxmax()
-            if last_cross >= len(data)-7:
+            if last_cross >= len(data)-detect_days:
                 gloden_cross["Code"].append(row["code"])
                 gloden_cross['Name'].append(row['code_name'])
                 gloden_cross['Last Cross Date'].append(data.iloc[last_cross]['date'])
