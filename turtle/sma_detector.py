@@ -15,10 +15,10 @@ def detect_golden_cross(df):
 
 def run(start_date, end_date, stock_file, detect_days=7):
     # with open('data/hs300_stocks.csv', 'r') as fd:
-    with open(stock_file, 'r') as fd:
-        df = pd.read_csv(fd, parse_dates=['updateDate'])
+    # with open(stock_file, 'r') as fd:
+    df = pd.read_csv(stock_file, parse_dates=['updateDate'], encoding='utf-8')
     
-    gloden_cross = {
+    golden_cross = {
         "Code": [],
         "Name": [],
         "Last Cross Date": []
@@ -39,13 +39,13 @@ def run(start_date, end_date, stock_file, detect_days=7):
                 continue
             last_cross = data['Crossover'].idxmax()
             if last_cross >= len(data)-detect_days:
-                gloden_cross["Code"].append(row["code"])
-                gloden_cross['Name'].append(row['code_name'])
-                gloden_cross['Last Cross Date'].append(data.iloc[last_cross]['date'])
-    for _, row in pd.DataFrame(gloden_cross).iterrows():
+                golden_cross["Code"].append(row["code"])
+                golden_cross['Name'].append(row['code_name'])
+                golden_cross['Last Cross Date'].append(data.iloc[last_cross]['date'])
+    for _, row in pd.DataFrame(golden_cross).iterrows():
         print(f'{row["Name"]} - {row["Code"]}: {row["Last Cross Date"]}')
-    with open('data/golden_cross.csv', 'w') as fd:
-        pd.DataFrame(gloden_cross).to_csv(fd, index=False)
+    # with open('data/golden_cross.csv', 'w') as fd:
+    pd.DataFrame(golden_cross).to_csv('data/golden_cross.csv', index=False)
 
 
 if __name__ == "__main__":
