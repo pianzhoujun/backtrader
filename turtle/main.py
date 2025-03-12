@@ -20,9 +20,10 @@ def main():
 
     for stock_cls, stock_csv in stocks.items():
         print(f"Begin detect {stock_cls} golden crosses...")
-        sdet.run(start_date, end_date, stock_csv, 7)
+        sdet.run(start_date, end_date, stock_csv, 3)
         print("Detect golden crosses done.")
         print("Do SMA Backtrade analysis...")
+        continue
     
         df = pd.read_csv('data/golden_cross.csv', encoding='utf-8',parse_dates=['Last Cross Date'])
         for _, row in df.iterrows():

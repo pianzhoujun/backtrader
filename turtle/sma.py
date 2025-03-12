@@ -23,7 +23,12 @@ class SmaCross(bt.SignalStrategy):
         self.print_final_cash()
 
     def print_final_cash(self):
-        print(f'Final cash: {self.broker.getvalue()}')
+        # print(self.broker.getvalue(), self.broker.getcash(),)
+        profit = self.broker.getvalue() - 10000# self.broker.getcash()
+        if profit > 0:
+            print(f'Won. Final profit: {self.broker.getvalue()}')
+        else:
+            print(f'Lose.Final lose: {self.broker.getvalue()}')
 
     def __init__(self):
         sma1 = bt.ind.SMA(period=self.params.sma1)

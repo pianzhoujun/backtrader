@@ -34,10 +34,10 @@ def run(start_date, end_date, stock_file, detect_days=7):
                 data.to_csv(f'data/{row["code"]}.csv', index=False)
             else:
                 data = pd.read_csv(f'data/{row["code"]}.csv', parse_dates=['date'])
-            data = detect_golden_cross(data)
-            if not data['Crossover'].any():
+            cross = detect_golden_cross(data)
+            if not cross['Crossover'].any():
                 continue
-            last_cross = data['Crossover'].idxmax()
+            last_cross = data[cross['Crossover']].index.max()
             if last_cross >= len(data)-detect_days:
                 golden_cross["Code"].append(row["code"])
                 golden_cross['Name'].append(row['code_name'])
@@ -47,6 +47,25 @@ def run(start_date, end_date, stock_file, detect_days=7):
     # with open('data/golden_cross.csv', 'w') as fd:
     pd.DataFrame(golden_cross).to_csv('data/golden_cross.csv', index=False)
 
+def test_sma():
+    file = 'data/sh.601318.csv'
+    file = 'data/sh.600989.csv'
+    df = pd.read_csv(file, parse_dates=['date'], encoding='utf-8')
+    sma5 = calculate_sma(df, 5)
+    sma10 = calculate_sma(df,10)
+    print(sma5)
+    print(sma10)
+    print("-------------")
+    cross = detect_golden_cross(df)
+    print(cross)
+    # cross = cross.sort_index()
+    last_cross = df[cross['Crossover']].index.max()
+    print(last_cross)
+    print(len(cross))
+    print(last_cross>=len(cross)-7)
+    print(cross.iloc[last_cross])
+
 
 if __name__ == "__main__":
-   run(start_date='2025-01-01', end_date='2025-03-10')
+#    run(start_date='2025-01-01', end_date='2025-03-10')
+    test_sma()
