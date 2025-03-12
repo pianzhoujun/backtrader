@@ -1,7 +1,7 @@
 import backtrader as bt
 
 class SmaCross(bt.SignalStrategy):
-    params = dict(sma1=5, sma2=20)
+    params = dict(sma1=5, sma2=10)
 
     def notify_order(self, order):
         if not order.alive():

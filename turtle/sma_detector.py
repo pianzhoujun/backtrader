@@ -9,8 +9,8 @@ def calculate_sma(df, window):
 
 def detect_golden_cross(df):
     df['SMA5'] = calculate_sma(df, 5)
-    df['SMA20'] = calculate_sma(df, 20)
-    df['Crossover'] = (df['SMA5'] > df['SMA20']) & (df['SMA5'].shift(1) <= df['SMA20'].shift(1))
+    df['SMA10'] = calculate_sma(df, 10)
+    df['Crossover'] = (df['SMA5'] > df['SMA10']) & (df['SMA5'].shift(1) <= df['SMA10'].shift(1))
     return df
 
 def run(start_date, end_date, stock_file, detect_days=7):
