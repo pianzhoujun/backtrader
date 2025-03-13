@@ -14,8 +14,6 @@ def detect_golden_cross(df):
     return df
 
 def run(start_date, end_date, stock_file, detect_days=7):
-    # with open('data/hs300_stocks.csv', 'r') as fd:
-    # with open(stock_file, 'r') as fd:
     df = pd.read_csv(stock_file, parse_dates=['updateDate'], encoding='utf-8')
     
     golden_cross = {
@@ -42,8 +40,8 @@ def run(start_date, end_date, stock_file, detect_days=7):
                 golden_cross["Code"].append(row["code"])
                 golden_cross['Name'].append(row['code_name'])
                 golden_cross['Last Cross Date'].append(data.iloc[last_cross]['date'])
-    for _, row in pd.DataFrame(golden_cross).iterrows():
-        print(f'{row["Name"]} - {row["Code"]}: {row["Last Cross Date"]}')
+    # for _, row in pd.DataFrame(golden_cross).iterrows():
+        # print(f'{row["Name"]} - {row["Code"]}: {row["Last Cross Date"]}')
     # with open('data/golden_cross.csv', 'w') as fd:
     pd.DataFrame(golden_cross).to_csv('data/golden_cross.csv', index=False)
 

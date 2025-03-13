@@ -20,17 +20,19 @@ def main():
 
     for stock_cls, stock_csv in stocks.items():
         print(f"Begin detect {stock_cls} golden crosses...")
-        sdet.run(start_date, end_date, stock_csv, 3)
+        sdet.run(start_date, end_date, stock_csv, 1)
         print("Detect golden crosses done.")
         print("Do SMA Backtrade analysis...")
-        continue
-    
+
         df = pd.read_csv('data/golden_cross.csv', encoding='utf-8',parse_dates=['Last Cross Date'])
         for _, row in df.iterrows():
             code = row['Code']
-            print(f"sma analysis of {code} {row['Name']}")
             data = pd.read_csv(f'data/{code}.csv', parse_dates=['date'])
-            sma.runstrat(data)
+            profit = sma.runstrat(data)
+            if profit > 0:
+                print(f"sma 🎉 盈利: {code} {row['Name']}. profit is {profit:.2f}")
+            # else:
+                # print(f"sma 💔 亏损: {code} {row['Name']}. profit is {profit:.2f}")
             # print("----------------------------------")
         print("SMA Backtrade analysis done.")
         print(f"Finish {stock_cls}")
