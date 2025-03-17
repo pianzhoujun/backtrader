@@ -25,7 +25,7 @@ def run(start_date, end_date, stock_file, detect_days=7):
     with bsw.BaoStockWrapper() as w:
         for _, row in df.iterrows():
             local_file = f'data/{row["code"]}.csv'
-            if not os.path.exists(local_file) or os.stat(local_file).st_mtime < time.time()-43200:
+            if not os.path.exists(local_file) or os.stat(local_file).st_mtime < time.time()-3600:
                 data = w.get_stock_data(code=row['code'], start_date=start_date, end_date=end_date)
                 if data is None:
                     break
