@@ -1,9 +1,10 @@
 import backtrader as bt
 
 debug = False
+win_prob = 0
 
 class SmaCross(bt.SignalStrategy):
-    params = dict(sma1=5, sma2=20, hold_days=20)  # 添加持有天数参数
+    params = dict(sma1=5, sma2=10, hold_days=5)  # 添加持有天数参数
 
     def __init__(self):
         self.sma1 = bt.ind.SMA(period=self.params.sma1)
@@ -13,6 +14,8 @@ class SmaCross(bt.SignalStrategy):
 
         self.signal_add(bt.SIGNAL_LONG, self.crossover)
         self.order = None
+        self.win = 0
+        self.loss = 0
 
     def log(self, txt, dt=None):
         ''' Logging function for this strategy'''
@@ -28,10 +31,12 @@ class SmaCross(bt.SignalStrategy):
 
          if self.crossover[0] < 0:  # 触发买入信号
             self.log(f"📉 SMA{self.params.sma1} 下穿 SMA{self.params.sma2}，触发卖出信号.")
+            self.bar_executed = self.bar_executed[1:]
 
          if len(self.bar_executed) > 0 and len(self) >= self.bar_executed[0] + self.params.hold_days:
              self.log(f"⏳ 第{len(self)-self.bar_executed[0]}个周期, 卖出.")
              self.bar_executed = self.bar_executed[1:]
+             self.sell()
 
     def notify_order(self, order):
         """ 监听订单状态变化 """
@@ -45,6 +50,10 @@ class SmaCross(bt.SignalStrategy):
         """ 监听交易完成，输出盈亏 """
         if trade.isclosed:
             self.log(f"🎉 盈利: {trade.pnlcomm:.2f}" if trade.pnlcomm > 0 else f"💔 亏损: {trade.pnlcomm:.2f}")
+            if trade.pnlcomm > 0:
+                self.win += 1
+            else:
+                self.loss += 1
 
     def stop(self):
         """ 回测结束，输出最终净值 """
@@ -57,9 +66,23 @@ class SmaCross(bt.SignalStrategy):
         self.log(f"💰 期初资金: {start_value:.2f}")
         self.log(f"🚀 策略净利润: {net_profit:.2f}")
         self.log("=" * 30)
+        self.log(f"👍 胜率: {self.win / (self.win+self.loss)}")
+        global win_prob
+        win_prob = self.win / (self.win+self.loss)
+
+def parse_args(pargs=None):
+    import argparse
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='sigsmacross')
+    parser.add_argument('--strat', required=False, action='store', default='',
+                        help=('Arguments for the strategy'))
+    parser.add_argument('--feed', required=False, action='store', default='',
+                        help=('Input data'))
+    return parser.parse_args(pargs)
 
 
-def runstrat(data, plot=False):
+def runstrat(data, plot=False, args={}):
     cerebro = bt.Cerebro()
     data0 = bt.feeds.PandasData(dataname=data,
         datetime='date',
@@ -70,7 +93,7 @@ def runstrat(data, plot=False):
         volume='volume',
     )
     cerebro.adddata(data0)
-    cerebro.addstrategy(SmaCross)
+    cerebro.addstrategy(SmaCross, **(eval('dict(' + args.strat + ')')))
     cerebro.broker.setcommission(commission=0.005)  # 设置佣金
     cerebro.broker.setcash(50000.0)
     cerebro.addsizer(bt.sizers.FixedSize, stake=200)
@@ -80,12 +103,13 @@ def runstrat(data, plot=False):
     profit = cerebro.broker.getvalue() - cerebro.broker.startingcash
     if plot:
         cerebro.plot()
-    return profit
+    return profit, win_prob
 
 if __name__ == '__main__':
     import pandas as pd
     import sys
-    feed = sys.argv[1]
+    args = parse_args()
+    feed = args.feed
     df = pd.read_csv(feed, parse_dates=['date'])
     debug = True
-    runstrat(df, True)
+    runstrat(df, True, args)

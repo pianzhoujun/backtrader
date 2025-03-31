@@ -14,7 +14,7 @@ stocks = {
 def main():
     print("Starting SMA Detector")
     end_date    = datetime.today()
-    start_date  = end_date - timedelta(days=365)
+    start_date  = end_date - timedelta(days=365*2)
     start_date  = start_date.strftime("%Y-%m-%d")
     end_date    = end_date.strftime("%Y-%m-%d")
 
@@ -28,12 +28,9 @@ def main():
         for _, row in df.iterrows():
             code = row['Code']
             data = pd.read_csv(f'data/{code}.csv', parse_dates=['date'])
-            profit = sma.runstrat(data)
-            if profit > 0:
-                print(f"sma 🎉 盈利: {code} {row['Name']}. profit is {profit:.2f}")
-            # else:
-                # print(f"sma 💔 亏损: {code} {row['Name']}. profit is {profit:.2f}")
-            # print("----------------------------------")
+            profit, win_prob = sma.runstrat(data)
+            if profit > 0 and win_prob >= 0.5:
+                print(f"sma 🎉 盈利: {code} {row['Name']}. profit={profit:.2f}. win probability={win_prob:.2f}")
         print("SMA Backtrade analysis done.")
         print(f"Finish {stock_cls}")
         print("....................................")
