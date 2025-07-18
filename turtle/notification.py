@@ -66,11 +66,3 @@ def send_email_smtp(subject, body, to_emails, auth_code, attachments=None):
         print("📧 邮件发送成功")
     except Exception as e:
         print("❌ 邮件发送失败:", e)
-
-# 示例使用
-# send_email_smtp(
-#     subject="今日选股信号",
-#     body="请查看今日的量化分析结果。",
-#     to_emails=["wgsmail@163.com"],
-#     auth_code='DHugFExb7NkWuY6a',
-# )

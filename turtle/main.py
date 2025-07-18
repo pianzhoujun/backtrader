@@ -113,13 +113,12 @@ def main():
 
     send_mail(f"{end_date} SMA分析结果", format_email_content(content))
 
-    if False and len(stock_to_ask_llm) > 0:
-        for code, name, _, _, _ in stock_to_ask_llm:
-            content = [] 
-            content.append(f"\n## code: {code}, name: {name}. \n")
-            content.append(ask_llm(code))
-            content = markdown.markdown('\n'.join(content))
-            send_mail(f"{end_date} {code} {name} AI分析结果", content)
+    for code, name, _, _, _ in stock_to_ask_llm:
+        content = [] 
+        content.append(f"\n## code: {code}, name: {name}. \n")
+        content.append(ask_llm(code))
+        content = markdown.markdown('\n'.join(content))
+        send_mail(f"{end_date} {code} {name} AI分析结果", content)
     print("Done. And good luck!")
 
 if __name__ == "__main__":
