@@ -4,7 +4,7 @@ debug = False
 win_prob = 0
 
 class SmaCross(bt.SignalStrategy):
-    params = dict(sma1=5, sma2=10, hold_days=5)  # 添加持有天数参数
+    params = dict(sma1=5, sma2=10, hold_days=21)  # 添加持有天数参数
 
     def __init__(self):
         self.sma1 = bt.ind.SMA(period=self.params.sma1)
@@ -16,6 +16,10 @@ class SmaCross(bt.SignalStrategy):
         self.order = None
         self.win = 0
         self.loss = 0
+        self.buy_count = 0
+        self.trade_profits = []
+        self.trade_profits_ratio = []
+        self.last_trade_size = 0
 
     def log(self, txt, dt=None):
         ''' Logging function for this strategy'''
@@ -28,8 +32,9 @@ class SmaCross(bt.SignalStrategy):
          if self.crossover[0] > 0:  # 触发买入信号
              self.bar_executed.append(len(self))
              self.log(f"📈 SMA{self.params.sma1} 上穿 SMA{self.params.sma2}，触发买入信号.")
+             self.buy_count += 1
 
-         if self.crossover[0] < 0:  # 触发买入信号
+         if self.crossover[0] < 0:  # 触发卖出号
             self.log(f"📉 SMA{self.params.sma1} 下穿 SMA{self.params.sma2}，触发卖出信号.")
             self.bar_executed = self.bar_executed[1:]
 
@@ -45,6 +50,7 @@ class SmaCross(bt.SignalStrategy):
             return
         if order.status in [order.Completed]:
            self.log(f"{'买入' if order.isbuy() else '卖出'} {order.executed.size} @ {order.executed.price} | {self.position.size}")
+           self.last_trade_size = abs(order.executed.size)
 
     def notify_trade(self, trade):
         """ 监听交易完成，输出盈亏 """
@@ -54,18 +60,32 @@ class SmaCross(bt.SignalStrategy):
                 self.win += 1
             else:
                 self.loss += 1
+            self.trade_profits.append(trade.pnlcomm)
+            # print(trade.pnlcomm, trade.price, self.last_trade_size)
+            self.trade_profits_ratio.append(trade.pnlcomm / (trade.price * self.last_trade_size) if trade.price != 0 else 0)
 
     def stop(self):
         """ 回测结束，输出最终净值 """
         final_value = self.broker.getvalue()
         start_value = self.broker.startingcash
-        net_profit = final_value - start_value
+        trade_count = len(self.trade_profits)
+        if trade_count == 0:
+            self.log("😭 没有任何交易！")
+            trade_count = 1
+        # print(self.trade_profits)
+        total_profit = sum(self.trade_profits)
+        avg_profit_ratio = sum(self.trade_profits_ratio) / trade_count if trade_count != 0 else 0
 
         self.log("=" * 30)
         self.log(f"📊 回测结束 - 期末资金: {final_value:.2f}")
         self.log(f"💰 期初资金: {start_value:.2f}")
-        self.log(f"🚀 策略净利润: {net_profit:.2f}")
+        self.log(f"🚀 策略净利润: {total_profit:.2f}")
+        self.log(f"🙋‍♂️ : {trade_count}")
+        self.log(f"🌟 平均收益率 {avg_profit_ratio:.2f}")
+        self.log(f"🚀 平均利润: {total_profit / trade_count:.2f}")
         self.log("=" * 30)
+        if self.win + self.loss == 0:
+            self.win = 1
         self.log(f"👍 胜率: {self.win / (self.win+self.loss)}")
         global win_prob
         win_prob = self.win / (self.win+self.loss)
@@ -84,7 +104,9 @@ def parse_args(pargs=None):
 
 def runstrat(data, plot=False, args={}):
     cerebro = bt.Cerebro()
-    data0 = bt.feeds.PandasData(dataname=data,
+
+    data0 = bt.feeds.PandasData(
+        dataname=data,
         datetime='date',
         open='open',
         high='high',
@@ -93,17 +115,33 @@ def runstrat(data, plot=False, args={}):
         volume='volume',
     )
     cerebro.adddata(data0)
-    cerebro.addstrategy(SmaCross, **(eval('dict(' + args.strat + ')')))
-    cerebro.broker.setcommission(commission=0.005)  # 设置佣金
+
+    cerebro.addstrategy(SmaCross)
+    cerebro.broker.setcommission(commission=0.005)
     cerebro.broker.setcash(50000.0)
     cerebro.addsizer(bt.sizers.FixedSize, stake=200)
-    # cerebro.addsizer(bt.sizers.PercentSizer, percents=10)
-    cerebro.run()
 
-    profit = cerebro.broker.getvalue() - cerebro.broker.startingcash
+    results = cerebro.run()
+    strat = results[0]
+
+    final_value = cerebro.broker.getvalue()
+    profit = final_value - cerebro.broker.startingcash
+
+    # 手动提取交易盈亏（推荐在策略中记录 self.trades = []）
+    # if hasattr(strat, 'trade_profits'):
+    trade_profits = strat.trade_profits
+    trade_profits_ratio = strat.trade_profits_ratio
+
+    # 计算平均收益和胜率
+    num_trades = len(trade_profits)
+    avg_profit = sum(trade_profits) / num_trades if num_trades > 0 else 0
+    win_prob = sum(1 for p in trade_profits if p > 0) / num_trades if num_trades > 0 else 0
+    avg_profit_ratio = sum(trade_profits_ratio) / num_trades if num_trades > 0 else 0
+
     if plot:
         cerebro.plot()
-    return profit, win_prob
+    return avg_profit, avg_profit_ratio, win_prob
+
 
 if __name__ == '__main__':
     import pandas as pd

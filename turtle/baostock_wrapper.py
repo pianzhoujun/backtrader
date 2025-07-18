@@ -18,6 +18,8 @@ class BaoStockWrapper:
             frequency="d", 
             adjustflag="3")
 
+        if rs is None:
+            raise Exception("rs is None")
         if rs.error_code != "0":
             print("error code: ", rs.error_code)
             raise Exception(rs.error_msg)
