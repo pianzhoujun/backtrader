@@ -70,7 +70,8 @@ def search_stock_data(code: str, start_date: str, end_date: str) -> pd.DataFrame
 
 # Create the agent
 # model = init_chat_model("ernie-4.0-8k-latest", model_provider="openai")
-model = init_chat_model("doubao-seed-1-6-250615", model_provider="openai")
+# model = init_chat_model("doubao-seed-1-6-250615", model_provider="openai")
+model = init_chat_model("doubao-seed-1-6-flash-250615", model_provider="openai")
 agent = create_react_agent(
     model,
     [search_stock_data],
@@ -110,33 +111,45 @@ def ask_llm(code):
     return msg
 
 if __name__ == "__main__":
-    print("===================五粮液=================")
-    content = ask_llm('sz.000858')
+    import os
+    # load environment variables from .env file (requires `python-dotenv`)
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path="./.env", override=True)
+
+    sender = str(os.environ.get("EMAIL_SENDER"))
+    receiver = str(os.environ.get("EMAIL_RECEIVER"))
+    passwd = str(os.environ.get("EMAIL_PASSWD"))
+
     import markdown
-    content = markdown.markdown(content)
-    print(content)
-    
     import notification
+
+    # content = ask_llm('sz.000858')
+    # content = markdown.markdown(content)
+    # print(content)
+    # notification.send_email_smtp(
+    #     subject="五粮液今日分析",
+    #     body=content,
+    #     to_emails=[receiver],
+    #     auth_code=passwd,
+    # )
+
+    # content = ask_llm('sz.000887')
+    # content = markdown.markdown(content)
+    # print(content)
+    # notification.send_email_smtp(
+    #     subject="中鼎股份日分析",
+    #     body=content,
+    #     to_emails=[receiver],
+    #     auth_code=passwd,
+    # )
+
+    print("===================美亚光电===============")
+    content = ask_llm('sz.002690') 
+    content = markdown.markdown(content)
     notification.send_email_smtp(
-        subject="五粮液今日分析",
+        subject="美亚光电今日分析",
         body=content,
-        to_emails=["wgsmail@163.com"],
-        auth_code='DHugFExb7NkWuY6a',
+        to_emails=[receiver],
+        auth_code=passwd,
     )
 
-    content = ask_llm('sz.000887')
-    import markdown
-    content = markdown.markdown(content)
-    print(content)
-    
-    import notification
-    notification.send_email_smtp(
-        subject="中鼎股份日分析",
-        body=content,
-        to_emails=["wgsmail@163.com"],
-        auth_code='DHugFExb7NkWuY6a',
-    )
-
-    # print("===================美亚光电===============")
-    # ask_llm('sz.002690') 
-    # print(search_stock_data(code='sh.688271', start_date='2025-01-01', end_date='2025-07-01'))

@@ -59,8 +59,6 @@ def send_email_smtp(subject, body, to_emails, auth_code, attachments=None):
     # 发送邮件
     try:
         with smtplib.SMTP_SSL(smtp_server, smtp_port) as server:
-            print(sender)
-            print(auth_code)
             server.login(sender_email, auth_code)
             server.sendmail(sender_email, to_emails, msg.as_string())
         print("📧 邮件发送成功")
